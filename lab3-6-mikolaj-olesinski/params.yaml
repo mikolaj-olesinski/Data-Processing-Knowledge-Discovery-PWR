@@ -1,0 +1,29 @@
+preprocess:
+  reviews_dir: data/raw
+  product_info: data/raw/product_info.csv
+  output: data/processed/reviews.csv
+  drop_columns:
+  - author_id
+  - 'Unnamed: 0'
+  - total_neg_feedback_count
+  - total_pos_feedback_count
+  - submission_time
+  - helpfulness
+  - total_feedback_count
+  - LABEL-rating
+split:
+  input: data/processed/reviews.csv
+  train_output: data/splits/train.csv
+  test_output: data/splits/test.csv
+  test_size: 0.2
+  random_state: 42
+  stratify: true
+  stratify_column: LABEL-rating-category
+
+train:
+  input_train: data/splits/train.csv
+  input_test: data/splits/test.csv
+  label_column: LABEL-rating-category
+  model: uniform_continuous
+  strategy: most_frequent
+  output: results/metrics.json

@@ -1,0 +1,33 @@
+stages:
+  preprocess:
+    cmd: python scripts/preprocess.py
+    deps:
+      - scripts/preprocess.py
+      - ${preprocess.reviews_dir}
+    params:
+      - preprocess
+    outs:
+      - ${preprocess.output}
+
+  split:
+    cmd: python scripts/split.py
+    deps:
+      - scripts/split.py
+      - ${split.input}
+    params:
+      - split
+    outs:
+      - ${split.train_output}
+      - ${split.test_output}
+
+  train:
+    cmd: python scripts/train.py
+    deps:
+      - scripts/train.py
+      - ${train.input_train}
+      - ${train.input_test}
+    params:
+      - train
+    metrics:
+      - ${train.output}:
+          cache: false
