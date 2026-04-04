@@ -10,8 +10,8 @@ stages:
       nfiles: 6
     - path: scripts/preprocess.py
       hash: md5
-      md5: 94b4935567b1d66ed5311dadc4370347
-      size: 2307
+      md5: ce6736d59a008492ea335c0eb9d4dc38
+      size: 4472
     params:
       params.yaml:
         preprocess:
@@ -27,22 +27,44 @@ stages:
           - helpfulness
           - total_feedback_count
           - LABEL-rating
+          - variation_desc
+          - sale_price_usd
+          - value_price_usd
+          - price_vs_value_ratio
+          - child_min_price
+          - child_max_price
+          dropna_subsets:
+          - review_text
+          - product_id
+          fill_unknown_cols:
+          - skin_tone
+          - eye_color
+          - skin_type
+          - hair_color
+          - tertiary_category
+          - variation_type
+          - variation_value
+          - size
+          fill_empty_cols:
+          - review_title
+          - highlights
+          - ingredients
     outs:
     - path: data/processed/reviews.csv
       hash: md5
-      md5: 60834d0fb94a2813c9767c09c8bc78fc
-      size: 1537464789
+      md5: 437903510e6fbea3924e6ac8fc053e6f
+      size: 1561523297
   split:
     cmd: python scripts/split.py
     deps:
     - path: data/processed/reviews.csv
       hash: md5
-      md5: 60834d0fb94a2813c9767c09c8bc78fc
-      size: 1537464789
+      md5: 437903510e6fbea3924e6ac8fc053e6f
+      size: 1561523297
     - path: scripts/split.py
       hash: md5
-      md5: ccab0976a84e0a72ae6e72598d95a510
-      size: 1143
+      md5: c872c72ee4b53f369a42d3f61b024b66
+      size: 2127
     params:
       params.yaml:
         split:
@@ -56,38 +78,103 @@ stages:
     outs:
     - path: data/splits/test.csv
       hash: md5
-      md5: 198b8a59245e3af65a36a9d02e4b1399
-      size: 307333409
+      md5: ac269f5faea2bf8a08c08a6205316f7c
+      size: 312294434
     - path: data/splits/train.csv
       hash: md5
-      md5: 0981f9ed3b87f7a7d94f6e9ae84a2d81
-      size: 1230131815
+      md5: d9baff7ad258816832eb59ac0f85bcd3
+      size: 1247600314
   train:
     cmd: python scripts/train.py
     deps:
-    - path: data/splits/test.csv
+    - path: data/splits/test_clean.csv
       hash: md5
-      md5: 198b8a59245e3af65a36a9d02e4b1399
-      size: 307333409
-    - path: data/splits/train.csv
+      md5: f71d9fdde10887b728528b7baae61022
+      size: 277529462
+    - path: data/splits/train_clean.csv
       hash: md5
-      md5: 0981f9ed3b87f7a7d94f6e9ae84a2d81
-      size: 1230131815
+      md5: 58020fce50b0c868e3458a02e935a5af
+      size: 1108383693
     - path: scripts/train.py
       hash: md5
-      md5: b7775c3e996d98685feb2c674013abd5
-      size: 1902
+      md5: 393d863a5e0231ef40faf58e2095734d
+      size: 7814
     params:
       params.yaml:
         train:
-          input_train: data/splits/train.csv
-          input_test: data/splits/test.csv
+          input_train: data/splits/train_clean.csv
+          input_test: data/splits/test_clean.csv
           label_column: LABEL-rating-category
-          model: uniform_continuous
-          strategy: most_frequent
           output: results/metrics.json
+          text_column: review_text
+          bow_max_features: 50000
+          cv_folds: 5
+          cv_sample: 100000
+          random_state: 42
+          models_dir: models
+          drop_from_features:
+          - product_id
+          - brand_id
+          - product_name
+          - brand_name
+          - review_title
+          - highlights
+          - ingredients
+          - primary_category
+          - size
+          - variation_value
+          models:
+            dummy:
+              strategy: most_frequent
+            linear_svc:
+              class_weight: balanced
+              max_iter: 5000
+            random_forest:
+              n_estimators: 200
+              class_weight: balanced
+              max_features: sqrt
     outs:
+    - path: models
+      hash: md5
+      md5: e6175c47718e302af468922ba466a6d1.dir
+      size: 2375517246
+      nfiles: 9
     - path: results/metrics.json
       hash: md5
-      md5: 7d3f313b30e3400f4c82c3245b3c2ba7
-      size: 129
+      md5: 67ce0c14e2b9ea792c78ad5595c94323
+      size: 3688
+  clean_text:
+    cmd: python scripts/clean_text.py
+    deps:
+    - path: data/splits/test.csv
+      hash: md5
+      md5: ac269f5faea2bf8a08c08a6205316f7c
+      size: 312294434
+    - path: data/splits/train.csv
+      hash: md5
+      md5: d9baff7ad258816832eb59ac0f85bcd3
+      size: 1247600314
+    - path: scripts/clean_text.py
+      hash: md5
+      md5: 1aa9c94129936bcc394ffa2208ca551e
+      size: 3682
+    params:
+      params.yaml:
+        clean_text:
+          input_train: data/splits/train.csv
+          input_test: data/splits/test.csv
+          train_output: data/splits/train_clean.csv
+          test_output: data/splits/test_clean.csv
+          text_columns:
+          - review_text
+          - review_title
+          min_token_len: 2
+    outs:
+    - path: data/splits/test_clean.csv
+      hash: md5
+      md5: f71d9fdde10887b728528b7baae61022
+      size: 277529462
+    - path: data/splits/train_clean.csv
+      hash: md5
+      md5: 58020fce50b0c868e3458a02e935a5af
+      size: 1108383693

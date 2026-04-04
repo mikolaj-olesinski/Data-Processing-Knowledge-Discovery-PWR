@@ -4,3 +4,10 @@ pandas
 scikit-learn
 polars
 pyyaml
+jupyter
+matplotlib
+seaborn
+nbconvert
+spacy
+contractions
+tqdm

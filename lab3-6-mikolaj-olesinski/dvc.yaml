@@ -20,6 +20,18 @@ stages:
       - ${split.train_output}
       - ${split.test_output}
 
+  clean_text:
+    cmd: python scripts/clean_text.py
+    deps:
+      - scripts/clean_text.py
+      - ${clean_text.input_train}
+      - ${clean_text.input_test}
+    params:
+      - clean_text
+    outs:
+      - ${clean_text.train_output}
+      - ${clean_text.test_output}
+
   train:
     cmd: python scripts/train.py
     deps:
@@ -28,6 +40,8 @@ stages:
       - ${train.input_test}
     params:
       - train
+    outs:
+      - ${train.models_dir}
     metrics:
       - ${train.output}:
           cache: false

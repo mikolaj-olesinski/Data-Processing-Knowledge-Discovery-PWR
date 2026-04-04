@@ -11,6 +11,30 @@ preprocess:
   - helpfulness
   - total_feedback_count
   - LABEL-rating
+  # high missing % columns (>50%)
+  - variation_desc
+  - sale_price_usd
+  - value_price_usd
+  - price_vs_value_ratio
+  - child_min_price
+  - child_max_price
+  dropna_subsets:
+  - review_text
+  - product_id
+  fill_unknown_cols:
+  - skin_tone
+  - eye_color
+  - skin_type
+  - hair_color
+  - tertiary_category
+  - variation_type
+  - variation_value
+  - size
+  fill_empty_cols:
+  - review_title
+  - highlights
+  - ingredients
+
 split:
   input: data/processed/reviews.csv
   train_output: data/splits/train.csv
@@ -20,10 +44,45 @@ split:
   stratify: true
   stratify_column: LABEL-rating-category
 
-train:
+clean_text:
   input_train: data/splits/train.csv
   input_test: data/splits/test.csv
+  train_output: data/splits/train_clean.csv
+  test_output: data/splits/test_clean.csv
+  text_columns:
+  - review_text
+  - review_title
+  min_token_len: 2
+
+train:
+  input_train: data/splits/train_clean.csv
+  input_test: data/splits/test_clean.csv
   label_column: LABEL-rating-category
-  model: uniform_continuous
-  strategy: most_frequent
   output: results/metrics.json
+  text_column: review_text
+  bow_max_features: 50000
+  cv_folds: 5
+  cv_sample: 100000
+  random_state: 42
+  models_dir: models
+  drop_from_features:
+    - product_id
+    - brand_id
+    - product_name
+    - brand_name
+    - review_title
+    - highlights
+    - ingredients
+    - primary_category
+    - size
+    - variation_value
+  models:
+    dummy:
+      strategy: most_frequent
+    linear_svc:
+      class_weight: balanced
+      max_iter: 5000
+    random_forest:
+      n_estimators: 200
+      class_weight: balanced
+      max_features: sqrt
