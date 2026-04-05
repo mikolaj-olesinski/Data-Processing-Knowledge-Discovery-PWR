@@ -45,3 +45,22 @@ stages:
     metrics:
       - ${train.output}:
           cache: false
+
+  execute_eda_raw:
+    cmd: papermill notebooks/eda_raw.ipynb data/notebooks/eda_raw_executed.ipynb --cwd
+      $(pwd)
+    deps:
+      - notebooks/eda_raw.ipynb
+      - data/raw
+    outs:
+      - data/notebooks/eda_raw_executed.ipynb:
+          cache: false
+
+  execute_eda:
+    cmd: papermill notebooks/eda.ipynb data/notebooks/eda_executed.ipynb --cwd $(pwd)
+    deps:
+      - notebooks/eda.ipynb
+      - data/processed/reviews.csv
+    outs:
+      - data/notebooks/eda_executed.ipynb:
+          cache: false

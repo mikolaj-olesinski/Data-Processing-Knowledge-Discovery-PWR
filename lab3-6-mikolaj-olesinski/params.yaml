@@ -11,7 +11,6 @@ preprocess:
   - helpfulness
   - total_feedback_count
   - LABEL-rating
-  # high missing % columns (>50%)
   - variation_desc
   - sale_price_usd
   - value_price_usd
@@ -34,7 +33,6 @@ preprocess:
   - review_title
   - highlights
   - ingredients
-
 split:
   input: data/processed/reviews.csv
   train_output: data/splits/train.csv
@@ -60,22 +58,25 @@ train:
   label_column: LABEL-rating-category
   output: results/metrics.json
   text_column: review_text
+  vectorizer: tfidf
+  experiment: all_features
+  active_model: random_forest
   bow_max_features: 50000
   cv_folds: 5
   cv_sample: 100000
   random_state: 42
   models_dir: models
   drop_from_features:
-    - product_id
-    - brand_id
-    - product_name
-    - brand_name
-    - review_title
-    - highlights
-    - ingredients
-    - primary_category
-    - size
-    - variation_value
+  - product_id
+  - brand_id
+  - product_name
+  - brand_name
+  - review_title
+  - highlights
+  - ingredients
+  - primary_category
+  - size
+  - variation_value
   models:
     dummy:
       strategy: most_frequent

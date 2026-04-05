@@ -97,8 +97,8 @@ stages:
       size: 1108383693
     - path: scripts/train.py
       hash: md5
-      md5: 393d863a5e0231ef40faf58e2095734d
-      size: 7814
+      md5: 0688a481a1f9eba93d90e3ad5dcf7e69
+      size: 7866
     params:
       params.yaml:
         train:
@@ -107,6 +107,9 @@ stages:
           label_column: LABEL-rating-category
           output: results/metrics.json
           text_column: review_text
+          vectorizer: tfidf
+          experiment: all_features
+          active_model: random_forest
           bow_max_features: 50000
           cv_folds: 5
           cv_sample: 100000
@@ -136,13 +139,13 @@ stages:
     outs:
     - path: models
       hash: md5
-      md5: e6175c47718e302af468922ba466a6d1.dir
-      size: 2375517246
-      nfiles: 9
+      md5: 82d03329d2070b03e70fadad8652b5fb.dir
+      size: 659621803
+      nfiles: 1
     - path: results/metrics.json
       hash: md5
-      md5: 67ce0c14e2b9ea792c78ad5595c94323
-      size: 3688
+      md5: f16a8843767e8a6f9791b543b6934681
+      size: 224
   clean_text:
     cmd: python scripts/clean_text.py
     deps:
@@ -178,3 +181,38 @@ stages:
       hash: md5
       md5: 58020fce50b0c868e3458a02e935a5af
       size: 1108383693
+  execute_eda:
+    cmd: papermill notebooks/eda.ipynb data/notebooks/eda_executed.ipynb --cwd 
+      $(pwd)
+    deps:
+    - path: data/processed/reviews.csv
+      hash: md5
+      md5: 437903510e6fbea3924e6ac8fc053e6f
+      size: 1561523297
+    - path: notebooks/eda.ipynb
+      hash: md5
+      md5: 459010e4609b02cf4d21cab69b304b02
+      size: 20096
+    outs:
+    - path: data/notebooks/eda_executed.ipynb
+      hash: md5
+      md5: c19962b7f6670f6d26a5ad61507848de
+      size: 541636
+  execute_eda_raw:
+    cmd: papermill notebooks/eda_raw.ipynb data/notebooks/eda_raw_executed.ipynb
+      --cwd $(pwd)
+    deps:
+    - path: data/raw
+      hash: md5
+      md5: 1879a37ccfe89870a8e73238e331f4ac.dir
+      size: 524018363
+      nfiles: 6
+    - path: notebooks/eda_raw.ipynb
+      hash: md5
+      md5: f01efe201d9ce81ed3dfca8544734362
+      size: 10088
+    outs:
+    - path: data/notebooks/eda_raw_executed.ipynb
+      hash: md5
+      md5: b10d319e1d3befc73369c5a2d31e5d3a
+      size: 282376

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c ':*)",
+      "Bash(dvc exp:*)",
+      "Bash(~/.local/bin/dvc exp:*)"
+    ]
+  }
+}

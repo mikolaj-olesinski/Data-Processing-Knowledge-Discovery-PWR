@@ -11,3 +11,4 @@ nbconvert
 spacy
 contractions
 tqdm
+papermill
