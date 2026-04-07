@@ -32,16 +32,28 @@ stages:
       - ${clean_text.train_output}
       - ${clean_text.test_output}
 
+  clean_text_w2v:
+    cmd: python scripts/clean_text_w2v.py
+    deps:
+      - scripts/clean_text_w2v.py
+      - ${clean_text_w2v.input_train}
+      - ${clean_text_w2v.input_test}
+    params:
+      - clean_text_w2v
+    outs:
+      - ${clean_text_w2v.train_output}
+      - ${clean_text_w2v.test_output}
+
   train:
     cmd: python scripts/train.py
     deps:
       - scripts/train.py
       - ${train.input_train}
       - ${train.input_test}
+      - ${train.input_train_w2v}
+      - ${train.input_test_w2v}
     params:
       - train
-    outs:
-      - ${train.models_dir}
     metrics:
       - ${train.output}:
           cache: false

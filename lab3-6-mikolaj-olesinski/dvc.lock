@@ -91,17 +91,26 @@ stages:
       hash: md5
       md5: f71d9fdde10887b728528b7baae61022
       size: 277529462
+    - path: data/splits/test_w2v_clean.csv
+      hash: md5
+      md5: 0ff66410f4a73e5674a7d36449303e3d
+      size: 309473157
     - path: data/splits/train_clean.csv
       hash: md5
       md5: 58020fce50b0c868e3458a02e935a5af
       size: 1108383693
+    - path: data/splits/train_w2v_clean.csv
+      hash: md5
+      md5: 66540db769cf51f51b99bf175e5dc2f1
+      size: 1236301939
     - path: scripts/train.py
       hash: md5
-      md5: 0688a481a1f9eba93d90e3ad5dcf7e69
-      size: 7866
+      md5: 387b6bcaf1a10a3fe7ff3e6ff7a5b86d
+      size: 15702
     params:
       params.yaml:
         train:
+          mlflow_experiment: sentiment_analysis
           input_train: data/splits/train_clean.csv
           input_test: data/splits/test_clean.csv
           label_column: LABEL-rating-category
@@ -109,12 +118,22 @@ stages:
           text_column: review_text
           vectorizer: tfidf
           experiment: all_features
-          active_model: random_forest
+          active_model: linear_svc
           bow_max_features: 50000
           cv_folds: 5
-          cv_sample: 100000
+          cv_sample:
           random_state: 42
-          models_dir: models
+          log_model: true
+          skip_cv: true
+          num_scaler: minmax
+          tag_key: final
+          tag_value: selectk_5000
+          w2v_model: word2vec-google-news-300
+          input_train_w2v: data/splits/train_w2v_clean.csv
+          input_test_w2v: data/splits/test_w2v_clean.csv
+          feature_selection: select_k_best
+          n_top_features: 5000
+          n_components:
           drop_from_features:
           - product_id
           - brand_id
@@ -137,15 +156,10 @@ stages:
               class_weight: balanced
               max_features: sqrt
     outs:
-    - path: models
-      hash: md5
-      md5: 82d03329d2070b03e70fadad8652b5fb.dir
-      size: 659621803
-      nfiles: 1
     - path: results/metrics.json
       hash: md5
-      md5: f16a8843767e8a6f9791b543b6934681
-      size: 224
+      md5: 7797253de38348d2d2e33bb0a36187c0
+      size: 184
   clean_text:
     cmd: python scripts/clean_text.py
     deps:
@@ -191,13 +205,13 @@ stages:
       size: 1561523297
     - path: notebooks/eda.ipynb
       hash: md5
-      md5: 459010e4609b02cf4d21cab69b304b02
-      size: 20096
+      md5: 340b8c98a6faa2d9ae0578f6336e6a89
+      size: 19827
     outs:
     - path: data/notebooks/eda_executed.ipynb
       hash: md5
-      md5: c19962b7f6670f6d26a5ad61507848de
-      size: 541636
+      md5: 4a2f8619157c77d72f58dd40d96d1a12
+      size: 541635
   execute_eda_raw:
     cmd: papermill notebooks/eda_raw.ipynb data/notebooks/eda_raw_executed.ipynb
       --cwd $(pwd)
@@ -209,10 +223,44 @@ stages:
       nfiles: 6
     - path: notebooks/eda_raw.ipynb
       hash: md5
-      md5: f01efe201d9ce81ed3dfca8544734362
-      size: 10088
+      md5: 35c1d8e4cdd81e2775b49c7efc273f0a
+      size: 9819
     outs:
     - path: data/notebooks/eda_raw_executed.ipynb
       hash: md5
-      md5: b10d319e1d3befc73369c5a2d31e5d3a
-      size: 282376
+      md5: dc4f28be8443b5f4dc7a4fa7784370da
+      size: 282378
+  clean_text_w2v:
+    cmd: python scripts/clean_text_w2v.py
+    deps:
+    - path: data/splits/test.csv
+      hash: md5
+      md5: ac269f5faea2bf8a08c08a6205316f7c
+      size: 312294434
+    - path: data/splits/train.csv
+      hash: md5
+      md5: d9baff7ad258816832eb59ac0f85bcd3
+      size: 1247600314
+    - path: scripts/clean_text_w2v.py
+      hash: md5
+      md5: 2788a33ef912abd85d08fe3e826493e2
+      size: 2262
+    params:
+      params.yaml:
+        clean_text_w2v:
+          input_train: data/splits/train.csv
+          input_test: data/splits/test.csv
+          train_output: data/splits/train_w2v_clean.csv
+          test_output: data/splits/test_w2v_clean.csv
+          text_columns:
+          - review_text
+          - review_title
+    outs:
+    - path: data/splits/test_w2v_clean.csv
+      hash: md5
+      md5: 0ff66410f4a73e5674a7d36449303e3d
+      size: 309473157
+    - path: data/splits/train_w2v_clean.csv
+      hash: md5
+      md5: 66540db769cf51f51b99bf175e5dc2f1
+      size: 1236301939

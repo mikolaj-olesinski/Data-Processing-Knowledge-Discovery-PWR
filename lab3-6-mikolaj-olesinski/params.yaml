@@ -52,20 +52,39 @@ clean_text:
   - review_title
   min_token_len: 2
 
+clean_text_w2v:
+  input_train: data/splits/train.csv
+  input_test: data/splits/test.csv
+  train_output: data/splits/train_w2v_clean.csv
+  test_output: data/splits/test_w2v_clean.csv
+  text_columns:
+  - review_text
+  - review_title
 train:
+  mlflow_experiment: sentiment_analysis
   input_train: data/splits/train_clean.csv
   input_test: data/splits/test_clean.csv
   label_column: LABEL-rating-category
   output: results/metrics.json
   text_column: review_text
-  vectorizer: tfidf
-  experiment: all_features
-  active_model: random_forest
+  vectorizer: tfidf # options: bow, tfidf, word2vec
+  experiment: all_features # options: all_features, no_text, text_only
+  active_model: linear_svc # options: dummy, linear_svc, random_forest
   bow_max_features: 50000
   cv_folds: 5
-  cv_sample: 100000
+  cv_sample: null
   random_state: 42
-  models_dir: models
+  log_model: true
+  skip_cv: true
+  num_scaler: minmax   # options: minmax, standard, robust
+  tag_key: final
+  tag_value: selectk_5000
+  w2v_model: word2vec-google-news-300
+  input_train_w2v: data/splits/train_w2v_clean.csv
+  input_test_w2v: data/splits/test_w2v_clean.csv
+  feature_selection: select_k_best # options: none, select_k_best, truncated_svd, both
+  n_top_features: 5000
+  n_components: null
   drop_from_features:
   - product_id
   - brand_id

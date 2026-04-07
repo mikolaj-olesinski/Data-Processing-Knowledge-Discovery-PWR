@@ -12,3 +12,5 @@ spacy
 contractions
 tqdm
 papermill
+mlflow
+gensim
