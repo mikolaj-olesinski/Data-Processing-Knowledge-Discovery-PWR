@@ -10,8 +10,8 @@ stages:
       nfiles: 6
     - path: scripts/preprocess.py
       hash: md5
-      md5: ce6736d59a008492ea335c0eb9d4dc38
-      size: 4472
+      md5: 248f419ca923aa15aec75d5a648ee0e7
+      size: 4559
     params:
       params.yaml:
         preprocess:
@@ -63,8 +63,8 @@ stages:
       size: 1561523297
     - path: scripts/split.py
       hash: md5
-      md5: c872c72ee4b53f369a42d3f61b024b66
-      size: 2127
+      md5: 955254e1d117f1dacfd78934bfc99d80
+      size: 1990
     params:
       params.yaml:
         split:
@@ -103,37 +103,38 @@ stages:
       hash: md5
       md5: 66540db769cf51f51b99bf175e5dc2f1
       size: 1236301939
+    - path: scripts/pipeline.py
+      hash: md5
+      md5: 20c910373f93af255b56b92921d5e66a
+      size: 8134
     - path: scripts/train.py
       hash: md5
-      md5: 387b6bcaf1a10a3fe7ff3e6ff7a5b86d
-      size: 15702
+      md5: 23c19fe7a24790ba1b67670707655fd7
+      size: 7010
     params:
       params.yaml:
         train:
-          mlflow_experiment: sentiment_analysis
           input_train: data/splits/train_clean.csv
           input_test: data/splits/test_clean.csv
-          label_column: LABEL-rating-category
-          output: results/metrics.json
-          text_column: review_text
-          vectorizer: tfidf
-          experiment: all_features
-          active_model: linear_svc
-          bow_max_features: 50000
-          cv_folds: 5
-          cv_sample:
-          random_state: 42
-          log_model: true
-          skip_cv: true
-          num_scaler: minmax
-          tag_key: final
-          tag_value: selectk_5000
-          w2v_model: word2vec-google-news-300
           input_train_w2v: data/splits/train_w2v_clean.csv
           input_test_w2v: data/splits/test_w2v_clean.csv
+          output: results/metrics.json
+          experiment: all_features
+          active_model: linear_svc
+          vectorizer: tfidf
+          random_state: 42
+          mlflow_enabled: true
+          mlflow_experiment: sentiment_analysis
+          log_model: true
+          tag_key: final
+          tag_value: selectk_5000
+          bow_max_features: 50000
+          num_scaler: minmax
           feature_selection: select_k_best
           n_top_features: 5000
           n_components:
+          text_column: review_text
+          label_column: LABEL-rating-category
           drop_from_features:
           - product_id
           - brand_id
@@ -145,6 +146,7 @@ stages:
           - primary_category
           - size
           - variation_value
+          w2v_model: word2vec-google-news-300
           models:
             dummy:
               strategy: most_frequent
@@ -158,8 +160,8 @@ stages:
     outs:
     - path: results/metrics.json
       hash: md5
-      md5: 7797253de38348d2d2e33bb0a36187c0
-      size: 184
+      md5: 17a771a105dee8272f0d0abd7d9242de
+      size: 163
   clean_text:
     cmd: python scripts/clean_text.py
     deps:
@@ -173,8 +175,8 @@ stages:
       size: 1247600314
     - path: scripts/clean_text.py
       hash: md5
-      md5: 1aa9c94129936bcc394ffa2208ca551e
-      size: 3682
+      md5: f8b07dbe6e74d96b5fd110012db3c8be
+      size: 3690
     params:
       params.yaml:
         clean_text:
@@ -205,13 +207,13 @@ stages:
       size: 1561523297
     - path: notebooks/eda.ipynb
       hash: md5
-      md5: 340b8c98a6faa2d9ae0578f6336e6a89
-      size: 19827
+      md5: 075684f2ef83c911340302c4e672fc46
+      size: 20368
     outs:
     - path: data/notebooks/eda_executed.ipynb
       hash: md5
-      md5: 4a2f8619157c77d72f58dd40d96d1a12
-      size: 541635
+      md5: 82b38a7759b922ed19e8f6a026d4c05c
+      size: 542175
   execute_eda_raw:
     cmd: papermill notebooks/eda_raw.ipynb data/notebooks/eda_raw_executed.ipynb
       --cwd $(pwd)
@@ -223,13 +225,13 @@ stages:
       nfiles: 6
     - path: notebooks/eda_raw.ipynb
       hash: md5
-      md5: 35c1d8e4cdd81e2775b49c7efc273f0a
-      size: 9819
+      md5: 42da6c83621d768c3f9b8c43c9bfa9c1
+      size: 10313
     outs:
     - path: data/notebooks/eda_raw_executed.ipynb
       hash: md5
-      md5: dc4f28be8443b5f4dc7a4fa7784370da
-      size: 282378
+      md5: 5c7f122ca5da19deca2896990fe267f8
+      size: 282871
   clean_text_w2v:
     cmd: python scripts/clean_text_w2v.py
     deps:
@@ -243,8 +245,8 @@ stages:
       size: 1247600314
     - path: scripts/clean_text_w2v.py
       hash: md5
-      md5: 2788a33ef912abd85d08fe3e826493e2
-      size: 2262
+      md5: ebd62f1a5b09385f7982413d5f091f84
+      size: 2198
     params:
       params.yaml:
         clean_text_w2v:
@@ -264,3 +266,189 @@ stages:
       hash: md5
       md5: 66540db769cf51f51b99bf175e5dc2f1
       size: 1236301939
+  tune:
+    cmd: python scripts/tune.py
+    deps:
+    - path: data/splits/test_clean.csv
+      hash: md5
+      md5: f71d9fdde10887b728528b7baae61022
+      size: 277529462
+    - path: data/splits/train_clean.csv
+      hash: md5
+      md5: 58020fce50b0c868e3458a02e935a5af
+      size: 1108383693
+    - path: scripts/pipeline.py
+      hash: md5
+      md5: 20c910373f93af255b56b92921d5e66a
+      size: 8134
+    - path: scripts/tune.py
+      hash: md5
+      md5: 37cf381b4b4d66870136e890d5df4431
+      size: 10066
+    params:
+      params.yaml:
+        tune:
+          input_train: data/splits/train_clean.csv
+          input_test: data/splits/test_clean.csv
+          output: results/tune_results.json
+          sample_size: 10000
+          cv_folds: 5
+          random_state: 42
+          n_iter_random: 20
+          n_candidates_halving: exhaust
+          active_models:
+          - linear_svc
+          - logistic_regression
+          - multinomial_nb
+          search_methods:
+          - grid_search
+          - random_search
+          - halving_grid_search
+          - halving_random_search
+          mlflow_enabled: true
+          mlflow_experiment: lab6_hyperparameter_tuning
+          tag_key: run_group
+          tag_value: default
+          experiment: all_features
+          vectorizer: tfidf
+          bow_max_features: 50000
+          num_scaler: minmax
+          feature_selection: select_k_best
+          n_top_features: 5000
+          n_components:
+          text_column: review_text
+          label_column: LABEL-rating-category
+          drop_from_features:
+          - product_id
+          - brand_id
+          - product_name
+          - brand_name
+          - review_title
+          - highlights
+          - ingredients
+          - primary_category
+          - size
+          - variation_value
+          w2v_model: word2vec-google-news-300
+          models:
+            linear_svc:
+              params:
+                class_weight: balanced
+                max_iter: 20000
+              param_grid:
+                clf__C:
+                - 0.01
+                - 0.1
+                - 1
+                - 10
+            logistic_regression:
+              params:
+                class_weight: balanced
+                max_iter: 5000
+                solver: saga
+              param_grid:
+                clf__C:
+                - 0.01
+                - 0.1
+                - 1
+                - 10
+                clf__l1_ratio:
+                - 0.0
+                - 1.0
+            multinomial_nb:
+              params: {}
+              param_grid:
+                clf__alpha:
+                - 0.01
+                - 0.1
+                - 0.5
+                - 1.0
+                - 2.0
+                clf__fit_prior:
+                - true
+                - false
+    outs:
+    - path: results/tune_results.json
+      hash: md5
+      md5: c96846cb983a7e3c319245a3f4152c54
+      size: 3148
+  shap@0:
+    cmd: python scripts/explain_shap.py --model linear_svc --method grid_search
+    deps:
+    - path: data/splits/test_clean.csv
+      hash: md5
+      md5: f71d9fdde10887b728528b7baae61022
+      size: 277529462
+    - path: scripts/explain_shap.py
+      hash: md5
+      md5: 482a25cd41addab3e18b9b7a9e195ad6
+      size: 8025
+    params:
+      params.yaml:
+        shap:
+          n_shap_samples: 10000
+          n_misclassified: 5
+          output_dir: results/shap
+        tune.label_column: LABEL-rating-category
+        tune.mlflow_experiment: lab6_hyperparameter_tuning
+        tune.text_column: review_text
+    outs:
+    - path: results/shap/linear_svc__grid_search
+      hash: md5
+      md5: 0f7b987dff4fac3bae92ae2617ddc6fe.dir
+      size: 1152817
+      nfiles: 7
+  shap@1:
+    cmd: python scripts/explain_shap.py --model logistic_regression --method 
+      grid_search
+    deps:
+    - path: data/splits/test_clean.csv
+      hash: md5
+      md5: f71d9fdde10887b728528b7baae61022
+      size: 277529462
+    - path: scripts/explain_shap.py
+      hash: md5
+      md5: 482a25cd41addab3e18b9b7a9e195ad6
+      size: 8025
+    params:
+      params.yaml:
+        shap:
+          n_shap_samples: 10000
+          n_misclassified: 5
+          output_dir: results/shap
+        tune.label_column: LABEL-rating-category
+        tune.mlflow_experiment: lab6_hyperparameter_tuning
+        tune.text_column: review_text
+    outs:
+    - path: results/shap/logistic_regression__grid_search
+      hash: md5
+      md5: 3aeb564ac099ee658d9c8438d90d834d.dir
+      size: 1217194
+      nfiles: 7
+  shap@2:
+    cmd: python scripts/explain_shap.py --model multinomial_nb --method 
+      grid_search
+    deps:
+    - path: data/splits/test_clean.csv
+      hash: md5
+      md5: f71d9fdde10887b728528b7baae61022
+      size: 277529462
+    - path: scripts/explain_shap.py
+      hash: md5
+      md5: 482a25cd41addab3e18b9b7a9e195ad6
+      size: 8025
+    params:
+      params.yaml:
+        shap:
+          n_shap_samples: 10000
+          n_misclassified: 5
+          output_dir: results/shap
+        tune.label_column: LABEL-rating-category
+        tune.mlflow_experiment: lab6_hyperparameter_tuning
+        tune.text_column: review_text
+    outs:
+    - path: results/shap/multinomial_nb__grid_search
+      hash: md5
+      md5: d8a6ea0f5f3bccf2a5b76094c37f2ab8.dir
+      size: 1201332
+      nfiles: 7

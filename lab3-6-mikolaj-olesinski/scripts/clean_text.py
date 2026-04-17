@@ -1,12 +1,14 @@
-import os
 import re
 from dataclasses import dataclass, field
 
 import contractions as contractions_lib
 import spacy
 import pandas as pd
-import yaml
 from tqdm import tqdm
+
+from utils import load_yaml_section, save_csv, setup_logger
+
+logger = setup_logger()
 
 nlp = spacy.load("en_core_web_sm", disable=["ner", "parser"])
 
@@ -22,9 +24,7 @@ class CleanTextConfig:
 
     @classmethod
     def from_yaml(cls) -> "CleanTextConfig":
-        with open("params.yaml") as f:
-            cfg = yaml.safe_load(f)["clean_text"]
-        return cls(**cfg)
+        return cls(**load_yaml_section("clean_text"))
 
 
 def expand_contractions(text: str) -> str:
@@ -62,7 +62,9 @@ def load_split(path: str) -> pd.DataFrame:
     return pd.read_csv(path, low_memory=False)
 
 
-def clean_columns(df: pd.DataFrame, columns: list[str], min_token_len: int) -> pd.DataFrame:
+def clean_columns(
+    df: pd.DataFrame, columns: list[str], min_token_len: int
+) -> pd.DataFrame:
     for col in columns:
         if col not in df.columns:
             continue
@@ -73,10 +75,15 @@ def clean_columns(df: pd.DataFrame, columns: list[str], min_token_len: int) -> p
 
         # Batch spaCy: lemmatize + remove stopwords
         results = []
-        pipe = tqdm(nlp.pipe(preprocessed, batch_size=1000), total=len(texts), desc=f"  spaCy '{col}'")
+        pipe = tqdm(
+            nlp.pipe(preprocessed, batch_size=1000),
+            total=len(texts),
+            desc=f"  spaCy '{col}'",
+        )
         for doc, not_tokens in zip(pipe, not_tokens_list):
             tokens = [
-                token.lemma_ for token in doc
+                token.lemma_
+                for token in doc
                 if not token.is_stop
                 and not token.is_space
                 and len(token.text) >= min_token_len
@@ -87,37 +94,34 @@ def clean_columns(df: pd.DataFrame, columns: list[str], min_token_len: int) -> p
     return df
 
 
-def save_split(df: pd.DataFrame, path: str) -> None:
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    df.to_csv(path, index=False)
-
-
 def main():
     cfg = CleanTextConfig.from_yaml()
 
     for split_name, input_path, output_path in [
         ("train", cfg.input_train, cfg.train_output),
-        ("test",  cfg.input_test,  cfg.test_output),
+        ("test", cfg.input_test, cfg.test_output),
     ]:
-        print(f"\n=== Processing {split_name} set ===")
+        logger.info(f"\n=== Processing {split_name} set ===")
 
         # 1. Load
-        print("  === 1. Loading ===")
+        logger.info("  === 1. Loading ===")
         df = load_split(input_path)
-        print(f"\tpath: {input_path}")
-        print(f"\trows: {len(df)}, cols: {len(df.columns)}")
+        logger.info(f"\tpath: {input_path}")
+        logger.info(f"\trows: {len(df)}, cols: {len(df.columns)}")
 
         # 2. Clean text columns
-        print("  === 2. Cleaning text columns ===")
-        print(f"\tcolumns: {cfg.text_columns}")
-        print(f"\tsteps: lowercase → expand contractions → remove HTML/URLs → negation tagging → spaCy lemmatize + stopwords")
+        logger.info("  === 2. Cleaning text columns ===")
+        logger.info(f"\tcolumns: {cfg.text_columns}")
+        logger.info(
+            f"\tsteps: lowercase → expand contractions → remove HTML/URLs → negation tagging → spaCy lemmatize + stopwords"
+        )
         df = clean_columns(df, cfg.text_columns, cfg.min_token_len)
 
         # 3. Save
-        print("  === 3. Saving ===")
-        save_split(df, output_path)
-        print(f"\tpath: {output_path}")
-        print(f"\trows saved: {len(df)}")
+        logger.info("  === 3. Saving ===")
+        save_csv(df, output_path)
+        logger.info(f"\tpath: {output_path}")
+        logger.info(f"\trows saved: {len(df)}")
 
 
 if __name__ == "__main__":

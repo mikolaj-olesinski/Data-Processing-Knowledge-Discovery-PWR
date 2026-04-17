@@ -9,7 +9,7 @@ run_exp() {
     local name=$1
     shift
     dvc exp remove "${name}" 2>/dev/null || true
-    dvc exp run --temp train --name "${name}" "$@"
+    dvc exp run --temp --name "${name}" "$@"
 }
 
 run_exp "tfidf__scaler_minmax" \

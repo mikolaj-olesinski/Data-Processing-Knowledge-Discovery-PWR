@@ -1,0 +1,142 @@
+[
+  {
+    "model": "linear_svc",
+    "method": "grid_search",
+    "cv_best_f1_macro": 0.8426,
+    "test_f1_macro": 0.8489,
+    "fit_time_seconds": 5.06,
+    "n_candidates_total": 4,
+    "best_params": {
+      "clf__C": 1
+    }
+  },
+  {
+    "model": "linear_svc",
+    "method": "random_search",
+    "cv_best_f1_macro": 0.8426,
+    "test_f1_macro": 0.8489,
+    "fit_time_seconds": 2.1,
+    "n_candidates_total": 4,
+    "best_params": {
+      "clf__C": 1
+    }
+  },
+  {
+    "model": "linear_svc",
+    "method": "halving_grid_search",
+    "cv_best_f1_macro": 0.8426,
+    "test_f1_macro": 0.8489,
+    "fit_time_seconds": 2.86,
+    "n_candidates_total": 6,
+    "best_params": {
+      "clf__C": 1
+    }
+  },
+  {
+    "model": "linear_svc",
+    "method": "halving_random_search",
+    "cv_best_f1_macro": 0.5771,
+    "test_f1_macro": 0.845,
+    "fit_time_seconds": 0.97,
+    "n_candidates_total": 6,
+    "best_params": {
+      "clf__C": 0.1
+    }
+  },
+  {
+    "model": "logistic_regression",
+    "method": "grid_search",
+    "cv_best_f1_macro": 0.8445,
+    "test_f1_macro": 0.8517,
+    "fit_time_seconds": 135.81,
+    "n_candidates_total": 8,
+    "best_params": {
+      "clf__C": 10,
+      "clf__l1_ratio": 0.0
+    }
+  },
+  {
+    "model": "logistic_regression",
+    "method": "random_search",
+    "cv_best_f1_macro": 0.8445,
+    "test_f1_macro": 0.8517,
+    "fit_time_seconds": 134.92,
+    "n_candidates_total": 8,
+    "best_params": {
+      "clf__l1_ratio": 0.0,
+      "clf__C": 10
+    }
+  },
+  {
+    "model": "logistic_regression",
+    "method": "halving_grid_search",
+    "cv_best_f1_macro": 0.8446,
+    "test_f1_macro": 0.8517,
+    "fit_time_seconds": 153.44,
+    "n_candidates_total": 11,
+    "best_params": {
+      "clf__C": 10,
+      "clf__l1_ratio": 0.0
+    }
+  },
+  {
+    "model": "logistic_regression",
+    "method": "halving_random_search",
+    "cv_best_f1_macro": 0.5898,
+    "test_f1_macro": 0.8517,
+    "fit_time_seconds": 1.85,
+    "n_candidates_total": 11,
+    "best_params": {
+      "clf__l1_ratio": 0.0,
+      "clf__C": 10
+    }
+  },
+  {
+    "model": "multinomial_nb",
+    "method": "grid_search",
+    "cv_best_f1_macro": 0.8154,
+    "test_f1_macro": 0.8171,
+    "fit_time_seconds": 2.48,
+    "n_candidates_total": 10,
+    "best_params": {
+      "clf__alpha": 0.1,
+      "clf__fit_prior": false
+    }
+  },
+  {
+    "model": "multinomial_nb",
+    "method": "random_search",
+    "cv_best_f1_macro": 0.8154,
+    "test_f1_macro": 0.8171,
+    "fit_time_seconds": 3.08,
+    "n_candidates_total": 10,
+    "best_params": {
+      "clf__fit_prior": false,
+      "clf__alpha": 0.1
+    }
+  },
+  {
+    "model": "multinomial_nb",
+    "method": "halving_grid_search",
+    "cv_best_f1_macro": 0.816,
+    "test_f1_macro": 0.8171,
+    "fit_time_seconds": 2.99,
+    "n_candidates_total": 16,
+    "best_params": {
+      "clf__alpha": 0.1,
+      "clf__fit_prior": false
+    }
+  },
+  {
+    "model": "multinomial_nb",
+    "method": "halving_random_search",
+    "cv_best_f1_macro": 0.571,
+    "test_f1_macro": 0.7539,
+    "fit_time_seconds": 1.31,
+    "n_candidates_total": 16,
+    "best_params": {
+      "clf__fit_prior": true,
+      "clf__alpha": 0.01
+    }
+  }
+]

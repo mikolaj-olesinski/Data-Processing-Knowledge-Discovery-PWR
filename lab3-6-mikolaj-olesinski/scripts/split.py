@@ -1,9 +1,11 @@
-import os
 from dataclasses import dataclass
 
 import pandas as pd
-import yaml
 from sklearn.model_selection import train_test_split
+
+from utils import load_yaml_section, save_csv, setup_logger
+
+logger = setup_logger()
 
 CSV_OPTIONS = {"low_memory": False}
 
@@ -20,9 +22,7 @@ class SplitConfig:
 
     @classmethod
     def from_yaml(cls) -> "SplitConfig":
-        with open("params.yaml") as f:
-            cfg = yaml.safe_load(f)["split"]
-        return cls(**cfg)
+        return cls(**load_yaml_section("split"))
 
 
 def load_data(path: str) -> pd.DataFrame:
@@ -43,36 +43,31 @@ def perform_split(
     )
 
 
-def save_splits(train: pd.DataFrame, test: pd.DataFrame, cfg: SplitConfig) -> None:
-    os.makedirs(os.path.dirname(cfg.train_output), exist_ok=True)
-    train.to_csv(cfg.train_output, index=False)
-    test.to_csv(cfg.test_output, index=False)
-
-
 def main():
     cfg = SplitConfig.from_yaml()
 
     # 1. Load
-    print("=== 1. Loading data ===")
+    logger.info("=== 1. Loading data ===")
     df = load_data(cfg.input)
-    print(f"\tpath: {cfg.input}")
-    print(f"\trows: {len(df)}, cols: {len(df.columns)}")
+    logger.info(f"\tpath: {cfg.input}")
+    logger.info(f"\trows: {len(df)}, cols: {len(df.columns)}")
 
     # 2. Split
-    print("\n=== 2. Splitting ===")
+    logger.info("\n=== 2. Splitting ===")
     train, test = perform_split(df, cfg)
-    print(f"\ttest_size: {cfg.test_size}, stratified on: '{cfg.stratify_column}'")
-    print(f"\ttrain rows: {len(train)}")
-    print(f"\ttest rows:  {len(test)}")
+    logger.info(f"\ttest_size: {cfg.test_size}, stratified on: '{cfg.stratify_column}'")
+    logger.info(f"\ttrain rows: {len(train)}")
+    logger.info(f"\ttest rows:  {len(test)}")
     if cfg.stratify_column and cfg.stratify_column in df.columns:
         dist = df[cfg.stratify_column].value_counts(normalize=True).sort_index()
-        print(f"\tclass distribution (full):\n{dist.to_string()}")
+        logger.info(f"\tclass distribution (full):\n{dist.to_string()}")
 
     # 3. Save
-    print("\n=== 3. Saving ===")
-    save_splits(train, test, cfg)
-    print(f"\ttrain -> {cfg.train_output}")
-    print(f"\ttest  -> {cfg.test_output}")
+    logger.info("\n=== 3. Saving ===")
+    save_csv(train, cfg.train_output)
+    save_csv(test, cfg.test_output)
+    logger.info(f"\ttrain -> {cfg.train_output}")
+    logger.info(f"\ttest  -> {cfg.test_output}")
 
 
 if __name__ == "__main__":

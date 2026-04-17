@@ -1,9 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python3 -c ':*)",
-      "Bash(dvc exp:*)",
-      "Bash(~/.local/bin/dvc exp:*)"
+      "Bash(grep -n \"def \" /Users/mikolajolesinski/Desktop/pdiow/listy/lab3-6-mikolaj-olesinski/scripts/*.py)",
+      "Bash(grep -r \"from_yaml\" /Users/mikolajolesinski/Desktop/pdiow/listy/lab3-6-mikolaj-olesinski/scripts/*.py)",
+      "Bash(grep -n \"os.makedirs\" /Users/mikolajolesinski/Desktop/pdiow/listy/lab3-6-mikolaj-olesinski/scripts/*.py)",
+      "Bash(grep -n \"pd.read_csv\\\\|to_csv\" /Users/mikolajolesinski/Desktop/pdiow/listy/lab3-6-mikolaj-olesinski/scripts/*.py)",
+      "Bash(cat)",
+      "Bash(python /tmp/analyze_params.py)",
+      "Bash(uv run python -c ':*)",
+      "Bash(ls -lh /Users/mikolajolesinski/Desktop/pdiow/listy/lab3-6-mikolaj-olesinski/notebooks/*.ipynb)"
     ]
   }
 }

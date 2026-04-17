@@ -3,7 +3,10 @@ import os
 from dataclasses import dataclass, field
 
 import pandas as pd
-import yaml
+
+from utils import load_yaml_section, save_csv, setup_logger
+
+logger = setup_logger()
 
 RATING_CATEGORY_MAP = {1: 0, 2: 0, 3: 0, 4: 1, 5: 1}
 
@@ -24,9 +27,7 @@ class PreprocessConfig:
 
     @classmethod
     def from_yaml(cls) -> "PreprocessConfig":
-        with open("params.yaml") as f:
-            cfg = yaml.safe_load(f)["preprocess"]
-        return cls(**cfg)
+        return cls(**load_yaml_section("preprocess"))
 
 
 def load_reviews(reviews_dir: str, product_info_path: str) -> pd.DataFrame:
@@ -35,7 +36,9 @@ def load_reviews(reviews_dir: str, product_info_path: str) -> pd.DataFrame:
         [pd.read_csv(f, **CSV_OPTIONS) for f in review_files],
         ignore_index=True,
     )
-    reviews["LABEL-rating"] = pd.to_numeric(reviews["LABEL-rating"], errors="coerce").astype("Int32")
+    reviews["LABEL-rating"] = pd.to_numeric(
+        reviews["LABEL-rating"], errors="coerce"
+    ).astype("Int32")
 
     # drop before merge to avoid _x/_y duplicate columns
     reviews = reviews.drop(columns=REVIEWS_DUPLICATE_COLS, errors="ignore")
@@ -63,7 +66,9 @@ def handle_missing(df: pd.DataFrame, cfg: "PreprocessConfig") -> pd.DataFrame:
     before = len(df)
     existing_subsets = [c for c in cfg.dropna_subsets if c in df.columns]
     df = df.dropna(subset=existing_subsets)
-    print(f"\tdropna({existing_subsets}): {len(df)} rows (removed {before - len(df)})")
+    logger.info(
+        f"\tdropna({existing_subsets}): {len(df)} rows (removed {before - len(df)})"
+    )
 
     # Fill categorical NaN with "unknown"
     for col in cfg.fill_unknown_cols:
@@ -82,45 +87,46 @@ def main():
     cfg = PreprocessConfig.from_yaml()
 
     # 1. Load and merge reviews with product info
-    print("=== 1. Loading data ===")
+    logger.info("=== 1. Loading data ===")
     df = load_reviews(cfg.reviews_dir, cfg.product_info)
-    print(f"\trows: {len(df)}, cols: {len(df.columns)}")
+    logger.info(f"\trows: {len(df)}, cols: {len(df.columns)}")
 
     # 2. Create sentiment target (ratings 1-2-3 → 0, ratings 4-5 → 1)
-    print("\n=== 2. Creating target label ===")
+    logger.info("\n=== 2. Creating target label ===")
     df = add_rating_category(df, "LABEL-rating")
-    print(f"\tclass distribution:\n{df['LABEL-rating-category'].value_counts().sort_index().to_string()}")
+    logger.info(
+        f"\tclass distribution:\n{df['LABEL-rating-category'].value_counts().sort_index().to_string()}"
+    )
 
     # 3. Add engineered features
-    print("\n=== 3. Adding features ===")
+    logger.info("\n=== 3. Adding features ===")
     df = add_features(df)
     new_features = ["review_text_length", "has_exclamation", "caps_ratio"]
-    print(f"\tadded: {new_features}")
+    logger.info(f"\tadded: {new_features}")
 
     # 4. Drop unused columns and deduplicate rows
-    print("\n=== 4. Dropping columns and deduplicating ===")
+    logger.info("\n=== 4. Dropping columns and deduplicating ===")
     before = len(df)
     df = df.drop(columns=cfg.drop_columns, errors="ignore").drop_duplicates()
-    print(f"\tdropped columns: {cfg.drop_columns}")
-    print(f"\trows after dedup: {len(df)} (removed {before - len(df)})")
+    logger.info(f"\tdropped columns: {cfg.drop_columns}")
+    logger.info(f"\trows after dedup: {len(df)} (removed {before - len(df)})")
 
     # 5. Drop rows without a valid target label
-    print("\n=== 5. Dropping rows with missing target ===")
+    logger.info("\n=== 5. Dropping rows with missing target ===")
     before = len(df)
     df = df.dropna(subset=["LABEL-rating-category"])
-    print(f"\trows after dropna: {len(df)} (removed {before - len(df)})")
+    logger.info(f"\trows after dropna: {len(df)} (removed {before - len(df)})")
 
     # 6. Handle missing values (drop critical, fill categorical/text)
-    print("\n=== 6. Handling missing values ===")
+    logger.info("\n=== 6. Handling missing values ===")
     df = handle_missing(df, cfg)
 
     # 7. Save
-    print(f"\n=== 7. Saving ===")
-    print(f"\tfinal shape: {len(df)} rows x {len(df.columns)} cols")
-    print(f"\tcolumns: {list(df.columns)}")
-    os.makedirs(os.path.dirname(cfg.output), exist_ok=True)
-    df.to_csv(cfg.output, index=False)
-    print(f"\tsaved to {cfg.output}")
+    logger.info("\n=== 7. Saving ===")
+    logger.info(f"\tfinal shape: {len(df)} rows x {len(df.columns)} cols")
+    logger.info(f"\tcolumns: {list(df.columns)}")
+    save_csv(df, cfg.output)
+    logger.info(f"\tsaved to {cfg.output}")
 
 
 if __name__ == "__main__":

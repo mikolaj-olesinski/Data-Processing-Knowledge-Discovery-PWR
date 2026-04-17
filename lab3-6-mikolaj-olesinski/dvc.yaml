@@ -48,6 +48,7 @@ stages:
     cmd: python scripts/train.py
     deps:
       - scripts/train.py
+      - scripts/pipeline.py
       - ${train.input_train}
       - ${train.input_test}
       - ${train.input_train_w2v}
@@ -57,6 +58,41 @@ stages:
     metrics:
       - ${train.output}:
           cache: false
+
+  tune:
+    cmd: python scripts/tune.py
+    deps:
+      - scripts/tune.py
+      - scripts/pipeline.py
+      - ${tune.input_train}
+      - ${tune.input_test}
+    params:
+      - tune
+    metrics:
+      - ${tune.output}:
+          cache: false
+
+  shap:
+    foreach:
+      - {model: linear_svc,          method: grid_search}
+      - {model: logistic_regression, method: grid_search}
+      - {model: multinomial_nb,      method: grid_search}
+    do:
+      cmd: >-
+        python scripts/explain_shap.py
+        --model ${item.model}
+        --method ${item.method}
+      deps:
+        - scripts/explain_shap.py
+        - ${tune.input_test}
+      params:
+        - tune.mlflow_experiment
+        - tune.text_column
+        - tune.label_column
+        - shap
+      outs:
+        - results/shap/${item.model}__${item.method}:
+            cache: false
 
   execute_eda_raw:
     cmd: papermill notebooks/eda_raw.ipynb data/notebooks/eda_raw_executed.ipynb --cwd

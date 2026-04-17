@@ -33,6 +33,7 @@ preprocess:
   - review_title
   - highlights
   - ingredients
+
 split:
   input: data/processed/reviews.csv
   train_output: data/splits/train.csv
@@ -60,31 +61,38 @@ clean_text_w2v:
   text_columns:
   - review_text
   - review_title
+
 train:
-  mlflow_experiment: sentiment_analysis
+  # --- Paths ---
   input_train: data/splits/train_clean.csv
   input_test: data/splits/test_clean.csv
-  label_column: LABEL-rating-category
-  output: results/metrics.json
-  text_column: review_text
-  vectorizer: tfidf # options: bow, tfidf, word2vec
-  experiment: all_features # options: all_features, no_text, text_only
-  active_model: linear_svc # options: dummy, linear_svc, random_forest
-  bow_max_features: 50000
-  cv_folds: 5
-  cv_sample: null
-  random_state: 42
-  log_model: true
-  skip_cv: true
-  num_scaler: minmax   # options: minmax, standard, robust
-  tag_key: final
-  tag_value: selectk_5000
-  w2v_model: word2vec-google-news-300
   input_train_w2v: data/splits/train_w2v_clean.csv
   input_test_w2v: data/splits/test_w2v_clean.csv
-  feature_selection: select_k_best # options: none, select_k_best, truncated_svd, both
+  output: results/metrics.json
+
+  # --- Experiment ---
+  experiment: all_features    # options: all_features, non_text, text_only
+  active_model: linear_svc    # options: dummy, linear_svc, random_forest
+  vectorizer: tfidf           # options: bow, tfidf, word2vec, w2v
+  random_state: 42
+
+  # --- MLflow ---
+  mlflow_enabled: true        # false = log locally to mlruns/ (no server needed)
+  mlflow_experiment: sentiment_analysis
+  log_model: true
+  tag_key: final
+  tag_value: selectk_5000
+
+  # --- Feature engineering ---
+  bow_max_features: 50000
+  num_scaler: minmax          # options: minmax, standard, robust
+  feature_selection: select_k_best  # options: none, select_k_best, truncated_svd, both
   n_top_features: 5000
-  n_components: null
+  n_components: null          # only used when feature_selection: truncated_svd or both
+
+  # --- Columns ---
+  text_column: review_text
+  label_column: LABEL-rating-category
   drop_from_features:
   - product_id
   - brand_id
@@ -96,6 +104,11 @@ train:
   - primary_category
   - size
   - variation_value
+
+  # --- Word2Vec ---
+  w2v_model: word2vec-google-news-300
+
+  # --- Model hyperparameters ---
   models:
     dummy:
       strategy: most_frequent
@@ -106,3 +119,93 @@ train:
       n_estimators: 200
       class_weight: balanced
       max_features: sqrt
+
+tune:
+  # --- Paths ---
+  input_train: data/splits/train_clean.csv
+  input_test: data/splits/test_clean.csv
+  output: results/tune_results.json
+
+  # --- Sampling ---
+  sample_size: 10000       # rows sampled from train for hyperparameter search
+
+  # --- Search config ---
+  cv_folds: 5
+  random_state: 42
+  n_iter_random: 10           # iterations for RandomizedSearchCV
+  n_candidates_halving: exhaust  # starting candidates for HalvingRandomSearchCV
+
+  # --- Active models and methods (subset of models/SEARCH_METHODS keys) ---
+  active_models:
+  - linear_svc
+  - logistic_regression
+  - multinomial_nb
+  search_methods:
+  - grid_search
+  - random_search
+  - halving_grid_search
+  - halving_random_search
+
+  # --- MLflow ---
+  mlflow_enabled: true
+  mlflow_experiment: lab6_hyperparameter_tuning
+  tag_key: run_group
+  tag_value: default
+
+  # --- Pipeline config (same as train best setup) ---
+  experiment: all_features
+  vectorizer: tfidf
+  bow_max_features: 10000
+  num_scaler: minmax
+  feature_selection: select_k_best
+  n_top_features: 5000
+  n_components: null
+  text_column: review_text
+  label_column: LABEL-rating-category
+  drop_from_features:
+  - product_id
+  - brand_id
+  - product_name
+  - brand_name
+  - review_title
+  - highlights
+  - ingredients
+  - primary_category
+  - size
+  - variation_value
+  w2v_model: word2vec-google-news-300
+
+  # --- Models and hyperparameter grids ---
+  # param_grid values can be either:
+  #   - plain list: [0.01, 0.1, 1, 10]
+  #   - DSL dict:   {logspace: [start, stop, num]}  -> np.logspace(start, stop, num)
+  #                 {logspace: [start, stop, num, base]}
+  #                 {linspace: [start, stop, num]}  -> np.linspace(start, stop, num)
+  #                 {range:    [start, stop, step]} -> list(range(start, stop, step))
+  models:
+    linear_svc:
+      params:
+        class_weight: balanced
+        max_iter: 50000
+        dual: auto
+      param_grid:
+        clf__C: {logspace: [-3, 2, 12]}
+        clf__loss: [hinge, squared_hinge]
+    logistic_regression:
+      params:
+        class_weight: balanced
+        max_iter: 20000
+        solver: saga
+      param_grid:
+        clf__C: {logspace: [-3, 2, 12]}
+        clf__l1_ratio: {linspace: [0.0, 1.0, 5]}
+    multinomial_nb:
+      params: {}
+      param_grid:
+        clf__alpha: {logspace: [-3, 1, 15]}
+        clf__fit_prior: [true, false]
+
+shap:
+  n_shap_samples: 10000
+  n_misclassified: 5
+  output_dir: results/shap
